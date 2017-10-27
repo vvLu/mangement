@@ -64,6 +64,7 @@ export default {
     }
   },
   created () {
+    this.form.value1 = format('yyyy-MM-dd hh:ss:mm', new Date())
   },
   methods: {
     fanhui () {
@@ -79,9 +80,9 @@ export default {
       this.dialogTableVisible = false
       this.form.value1 = format('yyyy-MM-dd hh:ss:mm', new Date())
     },
-    submit () {
+    submit (val, val2) {
       // this.$ajax.get('/api/clientboard/addcontact/' + this.bhTbale[0].phone + '?msg=' + this.form.beizhu)
-      addbeizhu(this.bhTbale[0].phone, this.form.beizhu, format('yyyy-MM-dd hh:ss', this.form.value1)).then((res) => {
+      addbeizhu(this.bhTbale[0].phone, this.form.beizhu, val2).then((res) => {
         if (res.data.code === 0) {
           this.$alert('添加成功！')
           this.dialogTableVisible = false

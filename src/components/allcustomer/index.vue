@@ -2,6 +2,7 @@
 <div id="allcustomer">
   <div v-show="tindex" class="allixned">
       <h2>我的所有客户</h2>
+      <!-- <searchbox :querys="querys" ref="searchbox" @searchFocus="searchFocus"></searchbox> -->
        <Tables
         ref="tablse"
         :table="table"
@@ -56,6 +57,7 @@ const Page = () => import('./../table/page')
 const BehaviorList = () => import('./../User Behavior/index')
 const dialogbeizhu = () => import('base/dialog/index')
 const gaojidailog = () => import('base/dialog/gaoji')
+const searchbox = () => import('base/search/search')
 import {getallList, getxiangqing, getbeizhu, getahsixuan, addbeizhu} from 'api/allcustomer.js'
 import {format} from 'assets/js/format.js'
 export default {
@@ -64,7 +66,8 @@ export default {
     Page,
     BehaviorList,
     dialogbeizhu,
-    gaojidailog
+    gaojidailog,
+    searchbox
   },
   data () {
     return {
@@ -126,16 +129,21 @@ export default {
       active: [],
       routine: [],
       silence: [],
-      loading: true
+      loading: true,
+      querys: ''
     }
   },
   created () {
     // this.getall(0, 100)
+    this.form.value1 = format('yyyy-MM-dd hh:ss:mm', new Date())
     this.$nextTick(function () {
       this._getall(0, 100)
     })
   },
   methods: {
+    searchFocus () {
+      console.log(this.$refs.searchbox.query)
+    },
     // 活跃
     huoyuechange (val) {
       this.active = val
@@ -218,7 +226,7 @@ export default {
       // console.log(this.form.value1)
       // console.log(format('yyyy-MM-dd hh:ss', this.form.value1))
       this.dialogTableVisible = false
-      addbeizhu(this.liuyanphone, this.form.beizhu, format('yyyy-MM-dd hh:ss', this.form.value1)).then((res) => {
+      addbeizhu(this.liuyanphone, this.form.beizhu, val2).then((res) => {
         if (res.data.code === 0) {
           this.$alert('添加成功！')
           this.liuyanphone = ''

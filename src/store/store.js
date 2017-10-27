@@ -7,8 +7,8 @@ Vue.use(Vuex)
 export default new Vuex.Store({
   state: {
     user: {
-      userName: '', // window.localStorage.userName ? window.localStorage.userName :
-      isLogin: false // window.localStorage.isLogin ? window.localStorage.isLogin :
+      userName: window.localStorage.userName, // window.localStorage.userName ? window.localStorage.userName :
+      isLogin: window.localStorage.isLogin // window.localStorage.isLogin ? window.localStorage.isLogin :
     },
     token: null,
     title: ''

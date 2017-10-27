@@ -9,7 +9,7 @@
             placeholder="选择日期时间">
           </el-date-picker>
         </el-form-item>
-        <el-form-item label="备注">
+        <el-form-item label="备注" style="text-align:left">
           <el-input type="textarea" v-model="form.beizhu"></el-input>
         </el-form-item>
         <el-form-item>
@@ -49,8 +49,16 @@ export default {
   },
   methods: {
     onSubmit () {
-      console.log(this.form.value1)
-      this.$emit('submit', this.form.beizhu, this.form.value1)
+      console.log(typeof this.form.value1 === 'string')
+      if (typeof this.form.value1 === 'string') {
+        console.log(1)
+        this.$emit('submit', this.form.beizhu, this.form.value1)
+      } else {
+        console.log(2)
+        console.log(this.format('yyyy-MM-dd hh:ss', this.form.value1))
+        this.$emit('submit', this.form.beizhu, this.format('yyyy-MM-dd hh:ss', this.form.value1))
+      }
+      // this.$emit('submit', this.form.beizhu, this.form.value1)
     },
     close () {
       this.$emit('closediolag')

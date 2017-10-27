@@ -121,6 +121,7 @@ export default {
     }
   },
   created () {
+    this.form.value1 = format('yyyy-MM-dd hh:ss:mm', new Date())
     this.gettable(0, 100)
   },
   methods: {
@@ -226,9 +227,9 @@ export default {
       this.form.value1 = format('yyyy-MM-dd hh:ss:mm', new Date())
     },
     // 确认添加
-    submit (val) {
+    submit (val, val2) {
       this.dialogTableVisible = false
-      addbeizhu(this.liuyanphone, this.form.beizhu, format('yyyy-MM-dd hh:ss', this.form.value1)).then((res) => {
+      addbeizhu(this.liuyanphone, this.form.beizhu, val2).then((res) => {
         if (res.data.code === 0) {
           this.$alert('添加成功！')
           this.liuyanphone = ''
