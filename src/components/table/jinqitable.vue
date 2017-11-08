@@ -1,5 +1,5 @@
 <template>
-<div style="margin:20px" id="jinqiguanzhu">
+<div  id="jinqiguanzhu">
 <div >
   <el-table
     max-height="300"
@@ -44,7 +44,7 @@
         prop="house"
         label="浏览项目详情">
         <template scope="scope">
-          <el-input type="textarea" v-model="scope.row.house"></el-input>
+          <el-input type="textarea" :disabled="true"  v-model="scope.row.house"></el-input>
         </template>
       </el-table-column>
     </el-table-column>

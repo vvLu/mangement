@@ -3,13 +3,33 @@
   <div v-show="tindex">
   	<div  class="tables">
   		  <h2>我的VIP客户</h2>
+        <el-form :inline="true" class="demo-form-inline">
+        <el-form-item label="">
+           <fenzulist 
+            ref="popover4"
+            :gridData="gridData"
+            @addnewfenzu="addnewfenzu"
+            @fenzubtns="fenzubtns"
+            @namebtn="namebtn">
+            </fenzulist>
+        </el-form-item >
+        <el-form-item label="搜索电话">
+          <el-input v-model="querys" placeholder="请输入电话" @change="keyUp"></el-input>
+        </el-form-item >
+      </el-form>
+        <!-- <div class="searchbox">
+        <searchbox :querys="querys" ref="searchbox" @searchFocus="searchFocus" placeholder="请输入电话"></searchbox>
+        搜索电话：<el-input v-model="querys" placeholder="请输入电话" @change="keyUp"></el-input>
+      </div> -->
   	  	<Tables 
         :table="table" 
         :loading="loading"
         @shuaxinlist="shuaxinlist" 
         @seebehavior="seebehavior"
         @addbeizhu="addbeizhu"
-        @gaojisearch="gaojisearch"></Tables>
+        @gaojisearch="gaojisearch"
+        @handleSelectionChange="handleSelectionChange"
+        @sortChange="sortChange"></Tables>
          <div style="text-align:center">
               <Page :pagenum="pagenum" 
                @handleCurrentChanges="handleCurrentChanges"  >
@@ -19,13 +39,19 @@
   </div>
   <div v-show="bTable">
     <BehaviorList  
-    :bhTbale="bhTbale" 
+    :loading="bhloading"
+    :bhTbale="bhTbale"
+    :underInfo="underInfo" 
     :table2="table2" 
     :table3="table3"
     :pagenum2="pagenum2"
+    :form="formxq"
     @addbeizhuinfo="addbeizhuinfo"
+    @xqbeibubtn="xqbeibubtn"
     @tindexshow="tindexshow"
-    @xiangqingCurrentChanges="xiangqingCurrentChanges"></BehaviorList>
+    @xiangqingCurrentChanges="xiangqingCurrentChanges"
+    @bluraddName="bluraddName"
+    @bluraddName2="bluraddName2"></BehaviorList>
   </div>
   <div>
     <dialogbeizhu 
@@ -46,6 +72,13 @@
     @allselect="allselect"
     ></gaojidailog>
   </div>
+  <div>
+    <addnewfenzu 
+    ref="dialogs" 
+    :dialogTableVisible2="dialogTableVisible2s"
+    @closediolag="closediolags"
+    @onSubmit="onSubmits"></addnewfenzu>
+  </div>
 </div>
 </template>
 
@@ -55,8 +88,10 @@ const Page = () => import('./../table/page')
 const BehaviorList = () => import('./../User Behavior/index')
 const dialogbeizhu = () => import('base/dialog/index')
 const gaojidailog = () => import('base/dialog/gaoji')
-import {gettable} from 'api/newzhuce.js'
+const fenzulist = () => import('base/dialog/fenzulist')
+const addnewfenzu = () => import('base/dialog/addnewfenzu')
 import {addbeizhu, getxiangqing, getbeizhu, getahsixuan} from 'api/allcustomer.js'
+import {gettable, addnewfenzuname, getfenzulists, addfenzusure, beizhuadds} from 'api/newzhuce.js'
 import {format} from 'assets/js/format.js'
 
 export default {
@@ -65,7 +100,9 @@ export default {
     BehaviorList,
     Page,
     dialogbeizhu,
-    gaojidailog
+    gaojidailog,
+    fenzulist,
+    addnewfenzu
   },
   data () {
     return {
@@ -109,7 +146,15 @@ export default {
       liuyanphone: '',
       form: {
         beizhu: '',
-        value1: ''
+        value1: '',
+        phone: '',
+        name: ''
+      },
+      formxq: {
+        beizhu: '',
+        value1: '',
+        phone: '',
+        name: ''
       },
       bTable: false,
       tindex: true,
@@ -117,14 +162,102 @@ export default {
       active: [],
       routine: [],
       silence: [],
-      loading: true
+      loading: true,
+      querys: '',
+      phones: '',
+      dialogTableVisible2s: false,
+      gridData: [],
+      selectsphones: [],
+      zuid: 0,
+      xqphone: '',
+      xqname: '',
+      underInfo: [],
+      sort: 1,  // 0:按联系时间排序，1:按注册时间排序（默认排序)
+      getxqphone: '',
+      bhloading: true
     }
   },
   created () {
     this.form.value1 = format('yyyy-MM-dd hh:ss:mm', new Date())
-    this.gettable(0, 100)
+    this.gettable(0, 100, this.phones, this.sort)
+    this._getfenzulists(0, 100)
   },
   methods: {
+    // 添加姓名备注
+    bluraddName (val) {
+      console.log(val)
+      beizhuadds(this.getxqphone, val, '').then((res) => {
+        this._getxiangqing(this.getxqphone)
+      })
+    },
+    // 添加用户备注
+    bluraddName2 (val) {
+      console.log(val)
+      beizhuadds(this.getxqphone, '', val).then((res) => {
+        this._getxiangqing(this.getxqphone)
+      })
+    },
+    // 列表排序
+    sortChange (val) {
+      if (val === 'descending') {
+        this.sort = 1
+        this.gettable(this.start, 100, this.phones, this.sort)
+      } else {
+        this.sort = 0
+        this.gettable(this.start, 100, this.phones, this.sort)
+      }
+    },
+    namebtn (val) {
+      this.zuid = val
+      this._addfenzusure(this.selectsphones, this.zuid)
+    },
+    _addfenzusure (phone, id) {
+      addfenzusure(phone, id).then((res) => {
+        if (res.data.code === 0) {
+          this.$alert('添加成功')
+          this.closediolags()
+          this.selectsphones = []
+          this.gettable(this.start, 100, this.phones, this.sort)
+        } else {
+          this.$alert('添加失败')
+        }
+      })
+    },
+    handleSelectionChange (val) {
+      console.log(val)
+      this.selectsphones = val
+    },
+    fenzubtns () {
+      this._getfenzulists(0, 100)
+    },
+    // 添加到新分组
+    addnewfenzu () {
+      this.dialogTableVisible2s = true
+    },
+    closediolags () {
+      this.dialogTableVisible2s = false
+    },
+    onSubmits () {
+      console.log(this.$refs.dialogs.form.name)
+      addnewfenzuname(this.$refs.dialogs.form.name).then((res) => {
+        this.dialogTableVisible2s = false
+        if (res.data.code === 0) {
+          this._addfenzusure(this.selectsphones, res.data.data.id)
+        }
+      })
+    },
+    // 获取所有分组
+    _getfenzulists (start, length) {
+      getfenzulists(start, length).then((res) => {
+        this.gridData = res.data.data
+      })
+    },
+    keyUp () {
+      if (this.querys.length >= 3 || this.querys.length === 0) {
+        this.phones = this.querys
+        this.gettable(0, 100, this.phones, this.sort)
+      }
+    },
      // 活跃
     huoyuechange (val) {
       this.active = val
@@ -148,7 +281,7 @@ export default {
         this.tableData[i].sevenday = false
         this.tableData[i].fifteenday = false
       }
-      this.gettable(0, 100)
+      this.gettable(0, 100, this.phones, this.sort)
     },
     // 确认筛选条件
     onSubmit () {
@@ -168,6 +301,7 @@ export default {
         'length': length
       }
       getahsixuan(data).then((res) => {
+        this.dialogTableVisible2 = false
         if (res.data.data.length > 0) {
           this.dialogTableVisible2 = false
           this.table = res.data.data
@@ -175,7 +309,8 @@ export default {
         } else if (res.data.data === 1) {
           this.$alert('请重新登录')
         } else {
-          this.$alert('获取失败')
+          // this.$alert('暂无数据')
+          this.table = []
         }
       })
     },
@@ -197,14 +332,14 @@ export default {
     },
     // 操作后重新获取列表
     shuaxinlist () {
-      this.gettable(0, 100)
+      this.gettable(this.start, 100, this.phones, this.sort)
     },
     // 获取vip列表
-    gettable (start, length) {
+    gettable (start, length, phones, sort) {
       this.loading = true
       var that = this
       // that.$ajax.get('/api/clientboard/getvip?start=' + start + '&length=' + length)
-      gettable(start, length).then((res) => {
+      gettable(start, length, this.phones, this.sort).then((res) => {
         this.loading = false
         if (res.data.data.length > 0) {
           that.table = res.data.data
@@ -212,7 +347,8 @@ export default {
         } else if (res.data.data === 1) {
           this.$alert('未登录')
         } else {
-          this.$alert('获取失败')
+          // this.$alert('暂无数据')
+          this.table = []
         }
       })
     },
@@ -220,6 +356,12 @@ export default {
     addbeizhu (val) {
       this.liuyanphone = val.phone
       this.dialogTableVisible = true
+      getxiangqing(this.liuyanphone).then((res) => {
+        if (res.data.code === 0) {
+          this.form.name = res.data.data.clientdetails[0].username
+          this.form.phone = res.data.data.clientdetails[0].phone
+        }
+      })
     },
     // 关闭备注
     closediolag () {
@@ -235,7 +377,7 @@ export default {
           this.liuyanphone = ''
           this.form.beizhu = ''
           this.form.value1 = format('yyyy-MM-dd hh:ss:mm', new Date())
-          this.gettable(0, 100)
+          this.gettable(0, 100, this.phones, this.sort)
         } else {
           this.$alert('添加失败！')
         }
@@ -251,15 +393,25 @@ export default {
     },
     // 获取详情数据
     getxiangqing (val) {
-      getxiangqing(val.phone).then((res) => {
-        console.log(res)
+      this.bhloading = true
+      this.getxqphone = val.phone
+      // this.$ajax.get('/api/clientboard/getuserinfo/' + val.phone)
+      this._getxiangqing(this.getxqphone)
+    },
+    _getxiangqing (val) {
+      getxiangqing(val).then((res) => {
+        this.bhloading = false
         if (res.data.code === 0) {
+          this.xqname = res.data.data.clientdetails[0].username
+          this.xqphone = res.data.data.clientdetails[0].phone
           var userinfo = [{
             enroll_time: '',
             username: '',
             resl_name: '',
             phone: '',
-            type: ''
+            type: '',
+            clientRemark: '',
+            nameRemark: ''
           }]
           var monthdetail = [{
             date_rangs: '',
@@ -301,7 +453,26 @@ export default {
           userinfo[0].resl_name = userInfors[0].resl_name
           userinfo[0].phone = userInfors[0].phone
           userinfo[0].type = userInfors[0].type + ',' + userInfors[1].type
+          userinfo[0].clientRemark = userInfors[0].clientRemark
+          userinfo[0].nameRemark = userInfors[0].nameRemark
           this.bhTbale = userinfo
+          var underInfo = [{
+            name: '',
+            phone: '',
+            year: '',
+            bk: '',
+            com: '',
+            dep: '',
+            xq: '',
+            point: '',
+            dec: ''
+          }]
+          if (res.data.data.offline === null) {
+            underInfo = []
+          } else {
+            underInfo[0] = res.data.data.offline
+          }
+          this.underInfo = underInfo
           for (var i = 0; i < userInfors.length; i++) {
             monthdetail[i].date_rangs = '最近' + userInfors[i].date_rangs + '天'
             monthdetail[i].operate_day = userInfors[i].operate_day
@@ -327,10 +498,21 @@ export default {
       this.bTable = false
       this.tindex = true
       // this.gettable(0, 100)
+      // this.getall(this.start, 100, this.phones)
+      this.gettable(this.start, 100, this.phones, this.sort)
     },
     // 详情里添加备注
     addbeizhuinfo (val) {
       this.getbeizhu(val, 0, 100)
+    },
+    xqbeibubtn () {
+      // this.getbeizhu(val, 0, 100)
+      getxiangqing(this.xqphone).then((res) => {
+        if (res.data.code === 0) {
+          this.formxq.name = res.data.data.clientdetails[0].username
+          this.formxq.phone = res.data.data.clientdetails[0].phone
+        }
+      })
     },
     // 获取备注详情
     getbeizhu (val, start, length) {
@@ -349,7 +531,7 @@ export default {
     handleCurrentChanges (val) {
       this.currentPage = val + 1
       this.start = val
-      this.gettable(this.start, 100)
+      this.gettable(this.start, 100, this.phones, this.sort)
     }
   }
 }
@@ -362,6 +544,11 @@ export default {
     border: 1px solid #ccc
     .el-tabs__header
       margin:0;
+  .demo-form-inline
+      position:absolute
+      top: 50px
+      left: 15%
+      z-index: 111
   h2
     text-align: left;
     line-height: 35px;
@@ -375,4 +562,15 @@ export default {
   .tables
     border: 1px solid #ccc
     border-radius: 5px 5px 0 0
+    position: relative
+  .searchbox
+      position: absolute
+      top: 50px
+      left: 220px
+      width: 300px
+      display: flex
+      line-height: 36px
+      z-index: 111
+      .el-input
+        width: 150px
 </style>

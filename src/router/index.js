@@ -33,6 +33,12 @@ const Personas = (resolve) => {
   })
 }
 
+const userfenzu = (resolve) => {
+  import('components/userfenzu/userfenzu').then((module) => {
+    resolve(module)
+  })
+}
+
 const Login = (resolve) => {
   import('base/login/index').then((module) => {
     resolve(module)
@@ -56,6 +62,10 @@ export default new Router({
       path: '/Vip',
       name: 'Vip',
       component: Vip
+    }, {
+      path: '/userfenzu',
+      name: 'userfenzu',
+      component: userfenzu
     }, {
       path: '/Personas',
       name: 'Personas',

@@ -7,6 +7,7 @@
     :data="table3"
     style="">
       <el-table-column
+        width="120px"
         prop="create_time"
         label="联系时间">
         <template scope="scope" style="display:flex">
@@ -14,10 +15,18 @@
         </template>
       </el-table-column>
       <el-table-column
+        width="120px"
+        prop="username"
+        label="备注人">
+        <template scope="scope" style="display:flex">
+          <span >{{ scope.row.username ? scope.row.username : '-' }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column
         prop="msg"
         label="备注内容">
         <template scope="scope" style="display:flex">
-          <el-input type="textarea" v-model="scope.row.msg"></el-input>
+          <el-input type="textarea" :disabled="true" v-model="scope.row.msg"></el-input>
         </template>
       </el-table-column>
   </el-table>

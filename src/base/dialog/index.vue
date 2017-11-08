@@ -2,6 +2,12 @@
   <div id='dialog'>
     <el-dialog title="备注信息" :visible="dialogTableVisible" :show-close="false">
       <el-form :model="form" >
+      <el-form-item label="注册名" style="text-align:left">
+          <span>{{form.name}}</span>
+        </el-form-item>
+        <el-form-item label="电话" style="text-align:left">
+          <span>{{form.phone}}</span>
+        </el-form-item>
         <el-form-item label="选择日期">
           <el-date-picker
             v-model="form.value1"
@@ -34,7 +40,9 @@ export default {
         return {
           form: {
             beizhu: '',
-            value1: ''
+            value1: '',
+            phone: '',
+            name: ''
           }
         }
       }

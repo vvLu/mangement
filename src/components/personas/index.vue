@@ -277,7 +277,8 @@ export default {
         } else if (res.data.data === 1) {
           this.$alert('请重新登录')
         } else {
-          this.$alert('获取失败')
+          // this.$alert('获取失败')
+          this.table = []
         }
       })
     },
@@ -318,7 +319,8 @@ export default {
         } else if (res.data.data === 1) {
           this.$alert('请重新登录')
         } else {
-          this.$alert('获取失败')
+          // this.$alert('获取失败')
+          this.table = []
         }
       })
     },
@@ -340,7 +342,7 @@ export default {
     },
     // 重新加载列表
     shuaxinlist () {
-      this.getahsixuan(0, 100)
+      this.getahsixuan(this.start, 100)
     },
     // 获取详情数据
     getxiangqing (val) {

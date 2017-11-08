@@ -25,4 +25,19 @@ export default {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+.el-table--enable-row-hover .el-table__body tr:hover>td{
+  background: #a5c7ff
+}
+.el-button--text{
+  display: inline-block;
+  width: 100%;
+  color:#00599a;
+  text-align: left;
+}
+/*.el-button--text:focus, .el-button--text:hover{
+  color: #fff
+}*/
+.el-textarea.is-disabled .el-textarea__inner{
+  color: #333 !important
+}
 </style>

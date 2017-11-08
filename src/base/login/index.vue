@@ -1,9 +1,5 @@
 <template>
 <div id="login">
-  <!-- <div class="loginbtn">
-    <el-button type="info"  @click="dialogFormVisible = true">登录</el-button>
-  </div> -->
-
   <el-dialog title="用户登录" :visible.sync="dialogFormVisible">
     <div class="login">
       <el-form :model="form">
@@ -59,7 +55,9 @@ export default {
           if (window.localStorage) {
             window.localStorage.setItem('userName', this.form.name)
             window.localStorage.setItem('isLogin', true)
+            window.localStorage.setItem('title', res.data.data.bank)
             this.$store.state.user.isLogin = true
+            this.$store.state.title = res.data.data.bank
             this.$store.state.user.userName = this.form.name
             this.$router.push('/')
           }
@@ -79,7 +77,7 @@ export default {
 <style lang="stylus" rel="stylesheet/stylus">
 #login
   .login
-    width: 300px
+    width: 90%
     border-radius: 5px
     padding: 20px
     .dialog-footer

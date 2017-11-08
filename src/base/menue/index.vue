@@ -7,14 +7,16 @@
         <router-link to="Vip"><el-menu-item index="1-2">我的VIP客户</el-menu-item></router-link>
         <router-link to="Project"><el-menu-item index="1-3">及时沟通</el-menu-item></router-link>
         <router-link to="Fenzu"><el-menu-item index="1-4">新注册用户</el-menu-item></router-link>
+        <router-link to="userfenzu"><el-menu-item index="1-5">自定义分组</el-menu-item></router-link>
       </el-submenu>
       <router-link to="Personas"><el-menu-item index="2">客户搜索</el-menu-item></router-link>
       <el-submenu index="2" class="yonghuinfo" v-if="$store.state.user.isLogin">
         <template slot="title">用户:{{$store.state.user.userName}}</template>
         <el-menu-item index="2-1" @click="qiehuanuser">切换用户</el-menu-item>
       </el-submenu>
-    </el-menu><!-- 
-       {{$store.state.user.isLogin}} -->
+
+      <el-menu-item class="yonghuinfo" index="3">数据更新：<span>{{$store.state.title}}</span></el-menu-item>
+    </el-menu>
    <div id="loginbtn" v-if="$store.state.user.isLogin === false">
      <router-link to="/login"><el-button type="primary">登录</el-button></router-link>
    </div>
@@ -41,6 +43,8 @@ export default {
         this.idnexname = '1-4'
       } else if (val.path === '/Personas') {
         this.idnexname = '2'
+      } else if (val.path === '/userfenzu') {
+        this.idnexname = '1-5'
       }
     },
     '$store' (val) {
@@ -51,6 +55,7 @@ export default {
     }
   },
   created () {
+    console.log(this.$store.state.title)
     if (this.$route.path === '/') {
       this.idnexname = '1-1'
     } else if (this.$route.path === '/Vip') {

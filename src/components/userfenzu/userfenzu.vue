@@ -1,7 +1,26 @@
-  <template>
-<div id="allcustomer">
+<template>
+<div id="userfenzu">
   <div v-show="tindex" class="allixned">
-      <h2>新注册用户</h2>
+      <h2>我的分组</h2>
+       <Tables
+        ref="tablse"
+        :table="table"
+        :loading="loading"
+        @newfenzubtn="newfenzubtn"
+        @seebehavior1="seebehavior1"
+        @deletfenzu="deletfenzu"></Tables>
+       <div style="text-align:center">
+          <Page 
+          :pagenum="pagenum" 
+          @handleCurrentChanges="handleCurrentChanges"></Page> 
+      </div>
+  </div>
+  <div v-show="tindex2" class="allixned">
+    
+      <h2><span>{{zuname}}</span></h2>
+      <!-- <div class="searchbox">
+              搜索电话：<el-input v-model="querys" placeholder="请输入电话" @change="keyUp"></el-input>
+      </div> -->
       <el-form :inline="true" class="demo-form-inline">
         <el-form-item label="">
            <fenzulist 
@@ -16,26 +35,25 @@
           <el-input v-model="querys" placeholder="请输入电话" @change="keyUp"></el-input>
         </el-form-item >
       </el-form>
-       <!-- <div class="searchbox">
-        搜索电话：<el-input v-model="querys" placeholder="请输入电话" @change="keyUp"></el-input>
-      </div> -->
-       <Tables
-        :table="table"
-        :loading="loading"
-         @shuaxinlist="shuaxinlist"
+       <Tableone
+        ref="tablse"
+        :table="tabledetails"
+        :loading="loading2"
+        @fanhui="fanhui"
+        @shuaxinlist="shuaxinlist"
         @seebehavior="seebehavior"
         @addbeizhu="addbeizhu"
         @gaojisearch="gaojisearch"
-        
         @handleSelectionChange="handleSelectionChange"
-        @sortChange="sortChange"></Tables>
+        @removefenzu="removefenzu"
+        @sortChange="sortChange"></Tableone>
        <div style="text-align:center">
           <Page 
-          :pagenum="pagenum" 
-          @handleCurrentChanges="handleCurrentChanges"></Page> 
+          :pagenum="pagenumdetails" 
+          @handleCurrentChanges="handleCurrentChangesxq"></Page> 
       </div>
-      <!--    -->
   </div>
+      <!--    -->
   <div v-show="bTable">
     <BehaviorList  
     :loading="bhloading"
@@ -46,8 +64,8 @@
     :pagenum2="pagenum2"
     :form="formxq"
     @addbeizhuinfo="addbeizhuinfo"
-    @tindexshow="tindexshow"
     @xqbeibubtn="xqbeibubtn"
+    @tindexshow="tindexshow"
     @xiangqingCurrentChanges="xiangqingCurrentChanges"
     @bluraddName="bluraddName"
     @bluraddName2="bluraddName2"></BehaviorList>
@@ -72,34 +90,45 @@
     ></gaojidailog>
   </div>
   <div>
+    <dialogs ref="dialogs" :dialogTableVisible2="dialogTableVisible2s"
+    @closediolag="closefenzu"
+    @onSubmit="addfenzuonSubmit"></dialogs>
+  </div>
+  <div>
     <addnewfenzu 
     ref="dialogs" 
     :dialogTableVisible2="dialogTableVisible2s"
     @closediolag="closediolags"
     @onSubmit="onSubmits"></addnewfenzu>
-  </div>
 </div>
 
+  </div>
 </template>
 
 <script>
-const Tables = () => import('./../table/tableone')
+const Tables = () => import('./../table/fenzulist')
+const Tableone = () => import('./../table/tableone')
 const Page = () => import('./../table/page')
 const BehaviorList = () => import('./../User Behavior/index')
 const dialogbeizhu = () => import('base/dialog/index')
 const gaojidailog = () => import('base/dialog/gaoji')
+const searchbox = () => import('base/search/search')
+const dialogs = () => import('base/dialog/addnewfenzu')
 const fenzulist = () => import('base/dialog/fenzulist')
 const addnewfenzu = () => import('base/dialog/addnewfenzu')
-import {addbeizhu, getxiangqing, getbeizhu, getahsixuan} from 'api/allcustomer.js'
-import {getall, addnewfenzuname, getfenzulists, addfenzusure, beizhuadds} from 'api/newzhuce.js'
+import {getallList, getxiangqing, getbeizhu, getahsixuan, addbeizhu} from 'api/allcustomer.js'
+import {getfenzulists, addnewfenzuname, getfenzudatils, removefenzu, deletfenzu, addfenzusure, beizhuadds} from 'api/newzhuce.js'
 import {format} from 'assets/js/format.js'
 export default {
   components: {
     Tables,
+    Tableone,
     Page,
     BehaviorList,
     dialogbeizhu,
     gaojidailog,
+    searchbox,
+    dialogs,
     fenzulist,
     addnewfenzu
   },
@@ -114,6 +143,7 @@ export default {
       start2: 0,
       currentPage: 1,
       bhTbale: [],
+      tabledetails: [],
       table2: [],
       bTable: false,
       tindex: true,
@@ -129,6 +159,7 @@ export default {
       }],
       dialogTableVisible: false,
       dialogTableVisible2: false,
+      dialogTableVisible2s: false,
       tableData: [{
         'time': '注册3天',
         'threeday': false,
@@ -174,12 +205,16 @@ export default {
       loading: true,
       querys: '',
       phones: '',
-      dialogTableVisible2s: false,
-      gridData: [],
+      tindex2: false,
+      pagenumdetails: 0,
       selectsphones: [],
       zuid: 0,
+      gridData: [],
+      xqstart: 0,
       xqphone: '',
       xqname: '',
+      zuname: '',
+      loading2: true,
       underInfo: [],
       sort: 1,  // 0:按联系时间排序，1:按注册时间排序（默认排序)
       getxqphone: '',
@@ -187,9 +222,11 @@ export default {
     }
   },
   created () {
+    // this.getall(0, 100)
     this.form.value1 = format('yyyy-MM-dd hh:ss:mm', new Date())
-    this.getall(0, 100, this.phones, this.sort)
-    this._getfenzulists(0, 100)
+    this.$nextTick(function () {
+      this._getfenzulists(0, 100)
+    })
   },
   methods: {
     // 添加姓名备注
@@ -210,10 +247,10 @@ export default {
     sortChange (val) {
       if (val === 'descending') {
         this.sort = 1
-        this.getall(this.start, 100, this.phones, this.sort)
+        this._getfenzudatils(this.xqstart, 100, this.phones, this.zuid, this.sort)
       } else {
         this.sort = 0
-        this.getall(this.start, 100, this.phones, this.sort)
+        this._getfenzudatils(this.xqstart, 100, this.phones, this.zuid, this.sort)
       }
     },
     namebtn (val) {
@@ -226,16 +263,17 @@ export default {
           this.$alert('添加成功')
           this.closediolags()
           this.selectsphones = []
-          this.getall(this.start, 100, this.phones, this.sort)
+          // this._getall(this.start, 100, this.phones)
+          this._getfenzudatils(this.xqstart, 100, this.phones, this.zuid, this.sort)
         } else {
           this.$alert('添加失败')
         }
       })
     },
-    handleSelectionChange (val) {
-      console.log(val)
-      this.selectsphones = val
-    },
+    // handleSelectionChange (val) {
+    //   console.log(val)
+    //   this.selectsphones = val
+    // },
     fenzubtns () {
       this._getfenzulists(0, 100)
     },
@@ -251,25 +289,98 @@ export default {
       addnewfenzuname(this.$refs.dialogs.form.name).then((res) => {
         this.dialogTableVisible2s = false
         if (res.data.code === 0) {
-          this._addfenzusure(this.selectsphones, res.data.data.id)
+          // this._addfenzusure(this.selectsphones, res.data.data.id)
+          this._getfenzulists(0, 100)
         }
       })
     },
     // 获取所有分组
-    _getfenzulists (start, length) {
-      getfenzulists(start, length).then((res) => {
-        this.gridData = res.data.data
+    // _getfenzulists (start, length) {
+    //   getfenzulists(start, length).then((res) => {
+    //     this.gridData = res.data.data
+    //   })
+    // },
+    // 删除分组
+    deletfenzu (val) {
+      console.log(val)
+      deletfenzu(val).then((res) => {
+        if (res.data.code === 0) {
+          this.$alert('删除成功')
+          this._getfenzulists(0, 100)
+        }
       })
     },
-    keyUp () {
-      if (this.querys.length >= 3 || this.querys.length === 0) {
-        this.phones = this.querys
-        this.getall(0, 100, this.phones, this.sort)
+    // 移出分组
+    removefenzu () {
+      this._removefenzu(this.selectsphones, this.zuid)
+    },
+    _removefenzu (phone, id) {
+      removefenzu(phone, id).then((res) => {
+        if (res.data.code === 0) {
+          this.$alert('删除成功！')
+          this._getfenzudatils(this.xqstart, 100, '', this.zuid, this.sort)
+        }
+      })
+    },
+    newfenzubtn () {
+      this.dialogTableVisible2s = true
+    },
+    // 确认添加分组
+    addfenzuonSubmit () {
+      if (this.$refs.dialogs.form.name === '') {
+        return false
+      } else {
+        addnewfenzuname(this.$refs.dialogs.form.name).then((res) => {
+          this.dialogTableVisible2s = false
+          if (res.data.code === 0) {
+            this._addfenzusure(this.selectsphones, res.data.data.id)
+          }
+        })
       }
     },
-    // 高级搜索
-    gaojisearch () {
-      this.dialogTableVisible2 = true
+    closefenzu () {
+      this.dialogTableVisible2s = false
+    },
+    // 获取所有分组
+    _getfenzulists (start, length) {
+      this.loading = true
+      getfenzulists(start, length).then((res) => {
+        this.loading = false
+        if (res.data.data.length > 0) {
+          this.table = res.data.data
+          this.gridData = res.data.data
+          this.pagenum = res.data.recordsTotal
+        } else if (res.data.draw === 1) {
+          this.$alert('请重新登录')
+        } else {
+          // this.$alert('暂无数据')
+          this.table = []
+        }
+      })
+    },
+    handleSelectionChange (val) {
+      console.log(val)
+      this.selectsphones = val
+    },
+    fanhui () {
+      this.tindex2 = false
+      this.tindex = true
+    },
+    keyUp () {
+      console.log(this.querys.length)
+      if (this.querys.length >= 3 || this.querys.length === 0) {
+        this.phones = this.querys
+        // this._getall(0, 100, this.phones)
+        this._getfenzudatils(this.xqstart, 100, this.phones, this.zuid, this.sort)
+      }
+    },
+    searchFocus () {
+      console.log(this.querys)
+      // console.log(val)
+      console.log(this.$refs.searchbox.query)
+      this.phones = this.$refs.searchbox.query
+      // this._getall(0, 100, this.phones)
+      this._getfenzudatils(this.xqstart, 100, this.phones, this.zuid, this.sort)
     },
     // 活跃
     huoyuechange (val) {
@@ -294,7 +405,8 @@ export default {
         this.tableData[i].sevenday = false
         this.tableData[i].fifteenday = false
       }
-      this.getall(0, 100, this.phones, this.sort)
+      // this._getall(0, 100, this.phones)
+      this._getfenzudatils(this.xqstart, 100, this.phones, this.zuid, this.sort)
     },
     // 确认筛选条件
     onSubmit () {
@@ -322,7 +434,8 @@ export default {
         } else if (res.data.data === 1) {
           this.$alert('请重新登录')
         } else {
-          this.$alert('获取失败')
+          // this.$alert('暂无数据')
+          this.table = []
         }
       })
     },
@@ -351,12 +464,14 @@ export default {
     },
     // 关闭备注
     closediolag () {
+      console.log(format('yyyy-MM-dd hh:ss:mm', new Date()))
       this.dialogTableVisible = false
-      this.form.value1 = ''
       this.form.value1 = format('yyyy-MM-dd hh:ss:mm', new Date())
     },
     // 确认添加备注
     submit (val, val2) {
+      // console.log(this.form.value1)
+      // console.log(format('yyyy-MM-dd hh:ss', this.form.value1))
       this.dialogTableVisible = false
       addbeizhu(this.liuyanphone, this.form.beizhu, val2).then((res) => {
         if (res.data.code === 0) {
@@ -364,16 +479,20 @@ export default {
           this.liuyanphone = ''
           this.form.beizhu = ''
           this.form.value1 = format('yyyy-MM-dd hh:ss:mm', new Date())
-          this.getall(0, 100, this.phones, this.sort)
+          // this._getall(0, 100, this.phones)
+          this._getfenzudatils(this.xqstart, 100, this.phones, this.zuid, this.sort)
         } else {
           this.$alert('添加失败！')
         }
       })
     },
-    // 获取列表
-    getall (start, length, phones, sort) {
+    // 高级搜索
+    gaojisearch () {
+      this.dialogTableVisible2 = true
+    },
+    _getall (start, length, phone) {
       this.loading = true
-      getall(start, length, this.phones, this.sort).then((res) => {
+      getallList(start, length, this.phones).then((res) => {
         this.loading = false
         if (res.data.data.length > 0) {
           this.table = res.data.data
@@ -388,18 +507,27 @@ export default {
     },
     // 重新加载列表
     shuaxinlist () {
-      this.getall(this.start, 100, this.phones, this.sort)
+      // this._getall(this.start, 100, this.phones)
+      this._getfenzudatils(this.xqstart, 100, this.phones, this.zuid, this.sort)
     },
     // 页数切换
     handleCurrentChanges (val) {
       this.currentPage = val + 1
       this.start = val
-      this.getall(this.start, 100, this.phones, this.sort)
+      // this._getall(this.start, 100, this.phones)
+      this._getfenzudatils(this.xqstart, 100, this.phones, this.zuid, this.sort)
+    },
+    // 项目详情
+    handleCurrentChangesxq (val) {
+      // this.xqcurrentpage = val + 1
+      this.xqstart = val
+      this._getfenzudatils(this.xqstart, 100, this.phones, this.zuid, this.sort)
     },
     // 获取详情数据
     getxiangqing (val) {
       this.bhloading = true
       this.getxqphone = val.phone
+      // this.$ajax.get('/api/clientboard/getuserinfo/' + val.phone)
       this._getxiangqing(this.getxqphone)
     },
     _getxiangqing (val) {
@@ -500,7 +628,6 @@ export default {
     },
     // 获取备注详情
     getbeizhu (val, start, length) {
-      // this.$ajax.get('/api/clientboard/getcontact?phone=' + val + '&start=' + start + '&length=' + length)
       getbeizhu(val, start, length).then((res) => {
         console.log(res.data)
         this.table3 = res.data.data
@@ -528,24 +655,41 @@ export default {
       this.getbeizhu(val.phone, 0, 100)
       this.bTable = true
       this.tindex = false
+      this.tindex2 = false
+    },
+    seebehavior1 (val, val2) {
+      this.zuname = val2
+      this.zuid = val
+      this._getfenzudatils(0, 100, '', val, this.sort)
+      this._getfenzulists(0, 100)
+      this.tindex2 = true
+      this.tindex = false
+    },
+    _getfenzudatils (start, length, phones, groupid, sort) {
+      this.loading2 = true
+      getfenzudatils(start, length, phones, groupid, this.sort).then((res) => {
+        this.loading2 = false
+        this.tabledetails = res.data.data
+        this.pagenumdetails = res.data.draw
+      })
     },
     // 切换页数
     xiangqingCurrentChanges (val, val2) {
-      console.log(val, val2)
       this.getbeizhu(val, val2, 100)
     },
     tindexshow () {
       this.bTable = false
-      this.tindex = true
-      // this.getall(0, 100)
-      this.getall(this.start, 100, this.phones, this.sort)
+      this.tindex = false
+      this.tindex2 = true
+      // this._getall(0, 100)
+      this._getfenzudatils(this.xqstart, 100, '', this.zuid, this.sort)
     }
   }
 }
 </script>
 
 <style lang="stylus" rel="stylesheet/stylus">
-#allcustomer
+#userfenzu
   margin-top: 10px
   .el-tabs
     border: 1px solid #ccc
@@ -555,10 +699,11 @@ export default {
     border: 1px solid #ccc
     border-radius: 5px 5px 0 0;
     position: relative
+    margin-top: 60px
     .demo-form-inline
       position:absolute
       top: 50px
-      left: 15%
+      left: 20%
       z-index: 111
     h2
       text-align: left;
@@ -575,7 +720,7 @@ export default {
       display: flex
       line-height: 36px
       position: absolute
-      top: 50px
+      top: 105px
       left: 220px
       z-index: 111
       .el-input

@@ -8,10 +8,10 @@ export default new Vuex.Store({
   state: {
     user: {
       userName: window.localStorage.userName, // window.localStorage.userName ? window.localStorage.userName :
-      isLogin: window.localStorage.isLogin // window.localStorage.isLogin ? window.localStorage.isLogin :
+      isLogin: window.localStorage.isLogin ? window.localStorage.isLogin : false
     },
     token: null,
-    title: ''
+    title: window.localStorage.title
   },
   mutations: {
     [types.LOGIN]: (state, data) => {
